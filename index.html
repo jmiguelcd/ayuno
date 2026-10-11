@@ -2,7 +2,7 @@
 <html lang="es-MX">
 <head>
   <meta charset="UTF-8">
-  <title>Control de Ayuno</title>
+  <title>Ayuno</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -146,9 +146,9 @@
   <div class="card">
     <h1>Control de Ayuno</h1>
 
-    <div class="info-badge">
-      <strong>Inicio registrado:</strong><br>
-      Domingo 11 de octubre de 2026 — 15:40 hrs (CDMX)
+    <!-- Ahora este contenedor se llena dinámicamente desde JavaScript -->
+    <div class="info-badge" id="infoBadge">
+      Cargando fecha de inicio...
     </div>
 
     <!-- Panel del reloj y fase activa -->
@@ -168,7 +168,10 @@
   <script>
     const TIMEZONE = "America/Mexico_City";
 
-    // Inicio fijo: Domingo 11 de octubre de 2026 a las 15:40 CDMX (UTC-6)
+    // ==========================================
+    // ÚNICA VARIABLE A EDITAR EN CADA AYUNO:
+    // Formato: AAAA-MM-DDTHH:MM:SS-06:00
+    // ==========================================
     const FECHA_INICIO = new Date("2026-10-11T15:40:00-06:00");
 
     const FASES = [
@@ -191,7 +194,7 @@
         minHoras: 12,
         maxHoras: 18,
         nombre: "🔥 Zona de Cetosis",
-        desc: "Lipólisis activa: tu cuerpo quema grasa corporal de forma directa y produce los primeros cuerpos cetónicos. La sensación de hambre disminuye. Esto puede iniciar antes o después, dependiente de tu dieta."
+        desc: "Lipólisis activa: tu cuerpo quema grasa corporal de forma directa y produce los primeros cuerpos cetónicos. La sensación de hambre disminuye."
       },
       {
         id: 4,
@@ -223,6 +226,28 @@
 
     function formatNumber(num) {
       return String(num).padStart(2, '0');
+    }
+
+    // Formatear la fecha de inicio automáticamente en español
+    function renderFechaInicio() {
+      const fechaLocal = new Date(FECHA_INICIO.toLocaleString("en-US", { timeZone: TIMEZONE }));
+      
+      const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+      const nombreDia = dias[fechaLocal.getDay()];
+      const dia = fechaLocal.getDate();
+      const mes = meses[fechaLocal.getMonth()];
+      const anio = fechaLocal.getFullYear();
+      const hora = formatNumber(fechaLocal.getHours());
+      const min = formatNumber(fechaLocal.getMinutes());
+
+      const textoFormateado = `${nombreDia} ${dia} de ${mes} de ${anio} — ${hora}:${min} hrs (CDMX)`;
+
+      document.getElementById("infoBadge").innerHTML = `
+        <strong>Inicio registrado:</strong><br>
+        ${textoFormateado}
+      `;
     }
 
     function actualizarReloj() {
@@ -299,6 +324,7 @@
     }
 
     window.onload = function() {
+      renderFechaInicio();
       actualizarReloj();
       setInterval(actualizarReloj, 1000);
     };
