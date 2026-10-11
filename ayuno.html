@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <title>Control de Ayuno</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --badge-done: #f0fdf4;
+      --badge-done-border: #bbf7d0;
+      --badge-done-text: #166534;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px 28px;
+      width: 440px;
+      box-shadow: 0 10px 30px rgba(2, 132, 199, 0.08);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 14px;
+      color: var(--text-main);
+    }
+    .info-badge {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      color: var(--primary-dark);
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    .display {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 16px;
+      margin-bottom: 24px;
+    }
+    .active-badge-tag {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      border: 1px solid #bae6fd;
+    }
+    .time {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .stage-description {
+      font-size: 0.88rem;
+      color: var(--text-main);
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      line-height: 1.45;
+      text-align: left;
+    }
+    .timeline-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: left;
+      margin: 0 0 10px 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badges-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+    }
+    .badge-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+    .badge-item.active {
+      border-color: var(--primary);
+      background: #f0f9ff;
+      color: var(--primary-dark);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.12);
+    }
+    .badge-item.done {
+      border-color: var(--badge-done-border);
+      background: var(--badge-done);
+      color: var(--badge-done-text);
+      font-weight: 600;
+    }
+    .badge-item .status-icon {
+      font-size: 0.95rem;
+    }
+    .footer-note {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Control de Ayuno</h1>
+
+    <div class="info-badge">
+      <strong>Inicio registrado:</strong><br>
+      Domingo 11 de octubre de 2026 — 15:40 hrs (CDMX)
+    </div>
+
+    <!-- Panel del reloj y fase activa -->
+    <div class="display">
+      <div class="active-badge-tag" id="activeBadgeTitle">Cargando fase...</div>
+      <div class="time" id="counter">00:00:00</div>
+      <div class="stage-description" id="activeBadgeDesc">Calculando estado metabólico...</div>
+    </div>
+
+    <!-- Lista de logros/insignias -->
+    <div class="timeline-title">Fases e Insignias</div>
+    <div class="badges-list" id="badgesContainer"></div>
+
+    <div class="footer-note" id="clockSystem">Hora actual CDMX: --:--:--</div>
+  </div>
+
+  <script>
+    const TIMEZONE = "America/Mexico_City";
+
+    // Inicio fijo: Domingo 11 de octubre de 2026 a las 15:40 CDMX (UTC-6)
+    const FECHA_INICIO = new Date("2026-10-11T15:40:00-06:00");
+
+    const FASES = [
+      {
+        id: 1,
+        minHoras: 0,
+        maxHoras: 4,
+        nombre: "🟢 Digestión",
+        desc: "Tu cuerpo está procesando la última comida. El estómago e intestinos entrarán en descanso y los niveles de glucosa comenzarán a normalizarse."
+      },
+      {
+        id: 2,
+        minHoras: 4,
+        maxHoras: 12,
+        nombre: "⚡ Descenso de Insulina",
+        desc: "La insulina baja a niveles basales. El hígado vacía reservas de glucógeno y prepara al organismo para cambiar a combustible graso."
+      },
+      {
+        id: 3,
+        minHoras: 12,
+        maxHoras: 18,
+        nombre: "🔥 Zona de Cetosis",
+        desc: "Lipólisis activa: tu cuerpo quema grasa corporal de forma directa y produce los primeros cuerpos cetónicos. La sensación de hambre disminuye. Esto puede iniciar antes o después, dependiente de tu dieta."
+      },
+      {
+        id: 4,
+        minHoras: 18,
+        maxHoras: 24,
+        nombre: "🧬 Autofagia Inicial",
+        desc: "Comienza la autofagia. Las células empiezan a descomponer y reciclar componentes dañados y proteínas envejecidas."
+      },
+      {
+        id: 5,
+        minHoras: 24,
+        maxHoras: 36,
+        nombre: "🛡️ Pico de Hormona de Crecimiento",
+        desc: "La HGH se eleva para proteger la masa muscular mientras se consume grasa. La autofagia acelera y bajan marcadores inflamatorios."
+      },
+      {
+        id: 6,
+        minHoras: 36,
+        maxHoras: Infinity,
+        nombre: "💎 Renovación Celular Profunda",
+        desc: "Máxima regeneración celular e inmunitaria. Alta claridad mental y sensibilidad a la insulina totalmente optimizada."
+      }
+    ];
+
+    function getNowCDMX() {
+      const now = new Date();
+      return new Date(now.toLocaleString("en-US", { timeZone: TIMEZONE }));
+    }
+
+    function formatNumber(num) {
+      return String(num).padStart(2, '0');
+    }
+
+    function actualizarReloj() {
+      const ahora = new Date();
+      const cdmxDate = getNowCDMX();
+
+      // Reloj del sistema CDMX
+      const hh = formatNumber(cdmxDate.getHours());
+      const mm = formatNumber(cdmxDate.getMinutes());
+      const ss = formatNumber(cdmxDate.getSeconds());
+      document.getElementById("clockSystem").innerText = `Hora actual CDMX: ${hh}:${mm}:${ss}`;
+
+      // Diferencia respecto al inicio
+      const diffMs = ahora.getTime() - FECHA_INICIO.getTime();
+
+      if (diffMs < 0) {
+        document.getElementById("counter").innerText = "00:00:00";
+        document.getElementById("activeBadgeTitle").innerText = "Por iniciar...";
+        document.getElementById("activeBadgeDesc").innerText = "El inicio registrado está programado para una hora posterior.";
+        renderBadges(-1);
+        return;
+      }
+
+      const totalSegundos = Math.floor(diffMs / 1000);
+      const horas = Math.floor(totalSegundos / 3600);
+      const minutos = Math.floor((totalSegundos % 3600) / 60);
+      const segundos = totalSegundos % 60;
+
+      document.getElementById("counter").innerText = 
+        `${formatNumber(horas)}:${formatNumber(minutos)}:${formatNumber(segundos)}`;
+
+      const horasDecimal = horas + (minutos / 60) + (segundos / 3600);
+
+      // Determinar fase activa
+      let faseActual = FASES[FASES.length - 1];
+      for (let i = 0; i < FASES.length; i++) {
+        if (horasDecimal >= FASES[i].minHoras && horasDecimal < FASES[i].maxHoras) {
+          faseActual = FASES[i];
+          break;
+        }
+      }
+
+      document.getElementById("activeBadgeTitle").innerText = faseActual.nombre;
+      document.getElementById("activeBadgeDesc").innerText = faseActual.desc;
+
+      renderBadges(horasDecimal);
+    }
+
+    function renderBadges(horasTranscurridas) {
+      const container = document.getElementById("badgesContainer");
+      container.innerHTML = "";
+
+      FASES.forEach((fase) => {
+        const item = document.createElement("div");
+        item.className = "badge-item";
+
+        let estadoIcono = "⏳";
+        if (horasTranscurridas >= fase.maxHoras) {
+          item.classList.add("done");
+          estadoIcono = "✓";
+        } else if (horasTranscurridas >= fase.minHoras && horasTranscurridas < fase.maxHoras) {
+          item.classList.add("active");
+          estadoIcono = "● En curso";
+        }
+
+        const rango = fase.maxHoras === Infinity ? `+${fase.minHoras}h` : `${fase.minHoras}-${fase.maxHoras}h`;
+
+        item.innerHTML = `
+          <span><strong>${fase.nombre}</strong> (${rango})</span>
+          <span class="status-icon">${estadoIcono}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    window.onload = function() {
+      actualizarReloj();
+      setInterval(actualizarReloj, 1000);
+    };
+  </script>
+</body>
+</html>
